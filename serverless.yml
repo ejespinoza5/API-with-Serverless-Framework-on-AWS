@@ -1,0 +1,62 @@
+org: josueespinoza
+service: espe-serverless
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:us-east-1:205930610423:table/TaskTable
+
+functions:
+  hello:
+    handler: src/handler.hello
+    events:
+      - httpApi:
+          path: /
+          method: get
+  createTask:
+    handler: src/addTask.addTask
+    events:
+      - httpApi:
+          path: /task
+          method: post
+  getTasks:
+    handler: src/getTask.getTask
+    events:
+      - httpApi:
+          path: /task
+          method: get
+
+resources:
+  Resources:
+    TaskTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: TaskTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    ApiGatewayHttpApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: TaskApi
+        ProtocolType: HTTP
+        CorsConfiguration:
+          AllowOrigins:
+            - 'http://localhost:4200'  # Origen permitido
+          AllowMethods:
+            - 'GET'  # Métodos HTTP permitidos
+            - 'POST'
+            - 'OPTIONS'  # Necesario para solicitudes preflight
+          AllowHeaders:
+            - 'Content-Type'  # Encabezados permitidos
+            - 'Authorization'
+          MaxAge: 3600  # Opcional: define cuánto tiempo puede almacenar el navegador la respuesta CORS
